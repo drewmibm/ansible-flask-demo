@@ -1,0 +1,85 @@
+- hosts: 163.74.92.105
+  vars: 
+    git_repo: '<GITHUB_REPO_URL>'
+    remote_project_path: /home/demoapp/
+    requirements_path: /home/demoapp/requirements.txt
+    venv_path: /home/demoapp/venv
+    service_file: demoAppServices.service
+    nginx_config: myProjectRequests
+  user: root
+  tasks:
+    - name: Update and upgrade apt packages
+      become: true
+      dnf:
+        update_cache: yes
+
+    - name: Install the package "python3.8-venv"
+      ansible.builtin.apt:
+        name: python3.8-venv
+
+    - name: Get repository from git and update locally
+      ansible.builtin.git:
+        repo: "{{git_repo}}"
+        dest: "{{remote_project_path}}"
+        clone: yes
+        update: yes
+
+    - name: Install specified python requirements in indicated virtualenv
+      ansible.builtin.pip:
+        virtualenv_command: python3 -m venv
+        requirements: "{{requirements_path}}"
+        virtualenv: "{{venv_path}}"
+
+    - name: Copy service file with owner and permissions to server
+      ansible.builtin.copy:
+        src: "{{service_file}}"
+        dest: /etc/systemd/system/
+        owner: root
+        group: root
+        mode: '0777'
+
+    - name: Start gunicorn service
+      systemd:
+        name: "{{service_file}}"
+        state: restarted
+        daemon_reload: yes
+
+    - name: Enable gunicorn service
+      systemd:
+        name: "{{service_file}}"
+        enabled: true
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+
+    - name: alow ssh
+      community.general.ufw:
+        name: "{{item}}"
+        rule: allow
+      loop:
+        - OpenSSH
+        - Nginx Full
+
+    - name: enable UFW
+      community.general.ufw:
+        state: reloaded
+
+    - name: Copy server block configuration file to server
+      ansible.builtin.copy:
+        src: "{{nginx_config}}"
+        dest: /etc/nginx/sites-available/{{nginx_config}}
+        owner: root
+        group: root
+        mode: '0777'   
+
+    - name: Creating a symlink between sites-available and sites-enabled directories
+      ansible.builtin.file:
+        src: /etc/nginx/sites-available/{{nginx_config}}
+        dest: /etc/nginx/sites-enabled/{{nginx_config}}
+        state: link 
+
+    - name: Start nginx
+      systemd:
+        name: nginx
+        state: restarted

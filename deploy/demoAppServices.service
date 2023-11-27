@@ -1,0 +1,10 @@
+[Unit]
+Description=Gunicorn instance to serve mysite
+After=network.target
+
+[Service]
+User=root
+Group=root
+WorkingDirectory=/home/demoapp
+Environment="PATH=/home/demoapp/venv/bin"
+ExecStart=/home/demoapp/venv/bin/gunicorn --workers 3 --bind unix:demoapp.sock app:app
