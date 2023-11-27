@@ -1,6 +1,6 @@
 - hosts: 163.74.92.105
   vars: 
-    git_repo: '<GITHUB_REPO_URL>'
+    git_repo: 'https://github.ibm.com/drewm/ansible-flask-demo.git'
     remote_project_path: /home/demoapp/
     requirements_path: /home/demoapp/requirements.txt
     venv_path: /home/demoapp/venv
