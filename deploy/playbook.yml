@@ -10,10 +10,11 @@
     user: itzuser
   become: yes
   tasks:
-    # - name: Update and upgrade dnf packages
-    #   become: true
-    #   dnf:
-    #     update_cache: yes
+    
+    - name: Update and upgrade dnf packages
+      become: true
+      dnf:
+        update_cache: yes
 
     - name: Get repository from git and update locally
       ansible.builtin.git:
