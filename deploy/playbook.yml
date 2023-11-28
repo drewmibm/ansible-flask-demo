@@ -5,7 +5,7 @@
     requirements_path: /home/itzuser/demoapp/requirements.txt
     venv_path: /home/itzuser/demoapp/venv
     service_file: demoAppServices.service
-    nginx_config: demoAppRequests
+    nginx_config: demoAppRequests.conf
     user: itzuser
   become: yes
   tasks:
@@ -65,7 +65,7 @@
 
     - name: copy configuration to nginx
       ansible.builtin.copy:
-      src: "{{nginx_config}}"
+        src: "{{nginx_config}}"
         dest: /etc/nginx/conf.d/{{nginx_config}}
         owner: root
         group: root
@@ -88,6 +88,12 @@
     #     src: /etc/nginx/sites-available/{{nginx_config}}
     #     dest: /etc/nginx/sites-enabled/{{nginx_config}}
     #     state: link 
+
+    - name: Set httpd_can_network_connect flag on and keep it persistent across reboots
+      ansible.posix.seboolean:
+        name: httpd_can_network_connect
+        state: true
+        persistent: true
 
     - name: Start nginx
       systemd:
