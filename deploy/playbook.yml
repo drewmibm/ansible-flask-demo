@@ -23,12 +23,6 @@
         update: yes
         accept_hostkey: true
 
-    - name: open folder permissions
-      ansible.builtin.file:
-        path: "{{remote_project_path}}"
-        mode: "0777"
-        recurse: yes
-
     - name: Install specified python requirements in indicated virtualenv
       ansible.builtin.pip:
         virtualenv_command: python3 -m venv
