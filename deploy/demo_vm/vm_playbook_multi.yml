@@ -1,0 +1,78 @@
+- hosts: 163.74.92.105
+  vars: 
+    git_repo: 'https://github.com/drewmibm/ansible-flask-demo.git'
+    remote_project_path: /home/itzuser/demoapp/
+    requirements_path: /home/itzuser/demoapp/requirements.txt
+    venv_path: /home/itzuser/demoapp/venv
+    service_file: demoAppServices.service
+    nginx_base_config: nginx.conf
+    nginx_config: demoAppRequests.conf
+    user: itzuser
+  become: yes
+  tasks:
+  
+    # pull git_repo to remote_project_path and accept new host key & install specified python requirements in indicated venv & copy service file with root owner and '0777' permissions to /etc/systemd/system & start service_file service & install nginx & copy nginx_base_config to /etc/nginx owner and group root with "0777" permissions & copy nginx_config to /etc/nginx/conf.d owner and group root with "0777" permissions & set selinux http_can_network_connect flag on and keep it persistant across reboots & start nginx service
+    - name: Pull git_repo to remote_project_path and accept new host key
+      ansible.builtin.git:
+        repo: "{{ git_repo }}"
+        dest: "{{ remote_project_path }}"
+        accept_hostkey: true
+
+    - name: Install specified python requirements in indicated venv
+      ansible.builtin.pip:
+        requirements: "{{ requirements_path }}"
+        virtualenv: "{{ venv_path }}"
+        virtualenv_python: python3
+
+    - name: Copy service file with root owner and '0777' permissions to /etc/systemd/system
+      ansible.builtin.template:
+        src: "{{ service_file }}"
+        dest: /etc/systemd/system/demoAppServices.service
+        owner: root
+        group: root
+        mode: '0777'
+
+    - name: Start service_file service
+      ansible.builtin.systemd:
+        name: demoAppServices.service
+        state: started
+        daemon_reload: true
+        enabled: true
+
+    - name: Install nginx
+      ansible.builtin.package:
+        name: nginx
+        state: present
+
+    - name: Copy nginx_base_config to /etc/nginx owner and group root with "0777" permissions
+      ansible.builtin.template:
+        src: "{{ nginx_base_config }}"
+        dest: /etc/nginx/nginx.conf
+        owner: root
+        group: root
+        mode: '0777'
+
+    - name: Copy nginx_config to /etc/nginx/conf.d owner and group root with "0777"
+        permissions
+      ansible.builtin.template:
+        src: "{{ nginx_config }}"
+        dest: /etc/nginx/conf.d/demoAppRequests.conf
+        owner: root
+        group: root
+        mode: '0777'
+
+    - name: Set selinux http_can_network_connect flag on and keep it persistant across
+        reboots
+      ansible.posix.seboolean:
+        name: http_can_network_connect
+        state: true
+        persistent: true
+
+    - name: Start nginx service
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        daemon_reload: true
+        enabled: true
+    
+    
